@@ -46,6 +46,10 @@ style:
     max: 3
   MaxLineLength:
     active: false
+  UnusedPrivateProperty:
+    active: false
+  LoopWithTooManyJumpStatements:
+    active: false
   WildcardImport:
     excludeImports:
       - java.util.*

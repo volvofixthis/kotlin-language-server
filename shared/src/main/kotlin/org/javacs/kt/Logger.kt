@@ -32,7 +32,7 @@ private class JULRedirector(private val downstream: Logger) : Handler() {
 
 enum class LogLevel(val value: Int) {
     NONE(100),
-    ALERT(5),
+    ALERT(2),
     ERROR(2),
     WARN(1),
     INFO(0),
