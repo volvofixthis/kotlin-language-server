@@ -57,4 +57,4 @@ org-slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 com-github-jk1-tcdeps = { id = "com.github.jk1.tcdeps", version = "1.6.2" }
 
 com-jaredsburrows-license = { id = "com.jaredsburrows.license", version = "0.9.8" }
-io-gitlab-arturbosch-detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.22.0" }
+io-gitlab-arturbosch-detekt = { id = "io.gitlab.arturbosch.detekt", version = "1.23.7" }
