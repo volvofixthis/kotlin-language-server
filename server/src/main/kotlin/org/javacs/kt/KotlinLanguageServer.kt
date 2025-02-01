@@ -21,8 +21,10 @@ import org.javacs.kt.util.AsyncExecutor
 import org.javacs.kt.util.TemporaryDirectory
 import org.javacs.kt.util.parseURI
 
-class KotlinLanguageServer(val config: Configuration = Configuration()) :
-    LanguageServer, LanguageClientAware, Closeable {
+class KotlinLanguageServer(
+    val config: Configuration = Configuration(),
+    private val tcpDebug: Boolean = false
+) : LanguageServer, LanguageClientAware, Closeable {
     val databaseService = DatabaseService()
     val classPath =
         CompilerClassPath(config.compiler, config.scripts, config.codegen, databaseService)
@@ -76,7 +78,9 @@ class KotlinLanguageServer(val config: Configuration = Configuration()) :
 
     override fun connect(client: LanguageClient) {
         this.client = client
-        connectLoggingBackend()
+        if (!tcpDebug) {
+            connectLoggingBackend()
+        }
 
         workspaces.connect(client)
         textDocuments.connect(client)
