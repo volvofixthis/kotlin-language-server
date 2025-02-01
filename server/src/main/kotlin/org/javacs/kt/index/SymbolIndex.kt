@@ -93,7 +93,7 @@ class SymbolIndex(
 
     init {
         transaction(db) {
-            SchemaUtils.createMissingTablesAndColumns(Symbols, Locations, Ranges, Positions)
+            SchemaUtils.create(Symbols, Locations, Ranges, Positions)
         }
     }
 

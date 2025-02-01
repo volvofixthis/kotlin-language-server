@@ -12,7 +12,7 @@ import org.javacs.kt.util.DelegatePrintStream
 
 val LOG = Logger()
 
-private class JULRedirector(private val downstream: Logger): Handler() {
+private class JULRedirector(private val downstream: Logger) : Handler() {
     override fun publish(record: LogRecord) {
         when (record.level) {
             Level.SEVERE -> downstream.error(record.message)
@@ -103,7 +103,8 @@ class Logger {
 
     fun trace(msg: String, vararg placeholders: Any?) = logWithPlaceholdersAt(LogLevel.TRACE, msg, placeholders)
 
-    fun deepTrace(msg: String, vararg placeholders: Any?) = logWithPlaceholdersAt(LogLevel.DEEP_TRACE, msg, placeholders)
+    fun deepTrace(msg: String, vararg placeholders: Any?) =
+        logWithPlaceholdersAt(LogLevel.DEEP_TRACE, msg, placeholders)
 
     // Convenience logging methods using inlined lambdas
 
@@ -144,11 +145,11 @@ class Logger {
         val lastIndex = msgLength - 1
         var charIndex = 0
         var placeholderIndex = 0
-        var result = StringBuilder()
+        val result = StringBuilder()
 
         while (charIndex < msgLength) {
-            val currentChar = msg.get(charIndex)
-            val nextChar = if (charIndex != lastIndex) msg.get(charIndex + 1) else '?'
+            val currentChar = msg[charIndex]
+            val nextChar = if (charIndex != lastIndex) msg[charIndex + 1] else '?'
             if ((placeholderIndex < placeholders.size) && (currentChar == '{') && (nextChar == '}')) {
                 result.append(placeholders[placeholderIndex] ?: "null")
                 placeholderIndex += 1
@@ -176,15 +177,15 @@ class Logger {
 
     private fun format(msg: String): String {
         val time = if (logTime) "${Instant.now()} " else ""
-        var thread = Thread.currentThread().name
+        val thread = Thread.currentThread().name
 
         return time + shortenOrPad(thread, 10) + msg.trimEnd()
     }
 
     private fun shortenOrPad(str: String, length: Int): String =
-            if (str.length <= length) {
-                str.padEnd(length, ' ')
-            } else {
-                ".." + str.substring(str.length - length + 2)
-            }
+        if (str.length <= length) {
+            str.padEnd(length, ' ')
+        } else {
+            ".." + str.substring(str.length - length + 2)
+        }
 }

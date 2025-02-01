@@ -35,11 +35,11 @@ inline fun withCustomStdout(delegateOut: PrintStream, task: () -> Unit) {
 }
 
 fun winCompatiblePathOf(path: String): Path {
-    if (path.get(2) == ':' && path.get(0) == '/') {
+    return if (path[2] == ':' && path[0] == '/') {
         // Strip leading '/' when dealing with paths on Windows
-        return Paths.get(path.substring(1))
+        Paths.get(path.substring(1))
     } else {
-        return Paths.get(path)
+        Paths.get(path)
     }
 }
 
@@ -53,10 +53,8 @@ fun Path.replaceExtensionWith(newExtension: String): Path {
 }
 
 inline fun <T, C : Iterable<T>> C.onEachIndexed(transform: (index: Int, T) -> Unit): C = apply {
-    var i = 0
-    for (element in this) {
+    for ((i, element) in this.withIndex()) {
         transform(i, element)
-        i++
     }
 }
 
@@ -82,9 +80,7 @@ fun <T> firstNonNull(vararg optionals: () -> T?): T? {
 }
 
 fun <T> nonNull(item: T?, errorMsgIfNull: String): T =
-    if (item == null) {
-        throw NullPointerException(errorMsgIfNull)
-    } else item
+    item ?: throw NullPointerException(errorMsgIfNull)
 
 inline fun <T> tryResolving(what: String, resolver: () -> T?): T? {
     try {

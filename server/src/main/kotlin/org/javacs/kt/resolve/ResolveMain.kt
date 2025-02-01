@@ -11,7 +11,7 @@ import org.javacs.kt.position.range
 import org.javacs.kt.util.partitionAroundLast
 import com.intellij.openapi.util.TextRange
 
-fun resolveMain(file: CompiledFile): Map<String,Any> {
+fun resolveMain(file: CompiledFile): Map<String, Any> {
     val parsedFile = file.parse.copy() as KtFile
 
     findTopLevelMainFunction(parsedFile)?.let { mainFunction ->
@@ -52,15 +52,13 @@ private fun findCompanionObjectMain(file: KtFile): Pair<String?, TextRange>? = f
     }
     .flatMap { companionObject ->
         companionObject.body?.children?.toList() ?: emptyList()
-    }
-    .mapNotNull { companionObjectInternal ->
+    }.firstNotNullOfOrNull { companionObjectInternal ->
         companionObjectInternal.takeIf {
             companionObjectInternal is KtNamedFunction
-            && "main" == companionObjectInternal.name
-            && companionObjectInternal.text.startsWith("@JvmStatic")
+                && "main" == companionObjectInternal.name
+                && companionObjectInternal.text.startsWith("@JvmStatic")
         }
-    }
-    .firstOrNull()?.let {
+    }?.let {
         // a little ugly, but because of success of the above, we know that "it" has 4 layers of parent objects (child of companion object body, companion object body, companion object, outer class)
         Pair((it.parent.parent.parent.parent as KtClass).fqName?.toString(), it.textRange)
     }

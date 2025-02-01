@@ -5,12 +5,12 @@ import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
 import com.google.gson.JsonParseException
-import org.eclipse.lsp4j.InitializeParams
-import org.eclipse.lsp4j.DiagnosticSeverity
 import java.lang.reflect.Type
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
+import org.eclipse.lsp4j.DiagnosticSeverity
+import org.eclipse.lsp4j.InitializeParams
 
 public data class SnippetsConfiguration(
     /** Whether code completion should return VSCode-style snippets. */
@@ -18,7 +18,9 @@ public data class SnippetsConfiguration(
 )
 
 public data class CodegenConfiguration(
-    /** Whether to enable code generation to a temporary build directory for Java interoperability. */
+    /**
+     * Whether to enable code generation to a temporary build directory for Java interoperability.
+     */
     var enabled: Boolean = false
 )
 
@@ -36,13 +38,13 @@ public data class DiagnosticsConfiguration(
 )
 
 public data class JVMConfiguration(
-    /** Which JVM target the Kotlin compiler uses. See Compiler.jvmTargetFrom for possible values. */
+    /**
+     * Which JVM target the Kotlin compiler uses. See Compiler.jvmTargetFrom for possible values.
+     */
     var target: String = "default"
 )
 
-public data class CompilerConfiguration(
-    val jvm: JVMConfiguration = JVMConfiguration()
-)
+public data class CompilerConfiguration(val jvm: JVMConfiguration = JVMConfiguration())
 
 public data class IndexingConfiguration(
     /** Whether an index of global symbols should be built in the background. */
@@ -77,8 +79,12 @@ data class FormattingConfiguration(
 
 fun getStoragePath(params: InitializeParams): Path? {
     params.initializationOptions?.let { initializationOptions ->
-        val gson = GsonBuilder().registerTypeHierarchyAdapter(Path::class.java, GsonPathConverter()).create()
-        val options = gson.fromJson(initializationOptions as JsonElement, InitializationOptions::class.java)
+        val gson =
+            GsonBuilder()
+                .registerTypeHierarchyAdapter(Path::class.java, GsonPathConverter())
+                .create()
+        val options =
+            gson.fromJson(initializationOptions as JsonElement, InitializationOptions::class.java)
 
         return options?.storagePath
     }
@@ -94,7 +100,11 @@ data class InitializationOptions(
 class GsonPathConverter : JsonDeserializer<Path?> {
 
     @Throws(JsonParseException::class)
-    override fun deserialize(json: JsonElement, type: Type?, context: JsonDeserializationContext?): Path? {
+    override fun deserialize(
+        json: JsonElement,
+        type: Type?,
+        context: JsonDeserializationContext?
+    ): Path? {
         return try {
             Paths.get(json.asString)
         } catch (ex: InvalidPathException) {

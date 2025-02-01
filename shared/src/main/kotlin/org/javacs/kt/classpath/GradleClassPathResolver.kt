@@ -10,29 +10,32 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-internal class GradleClassPathResolver(private val path: Path, private val includeKotlinDSL: Boolean): ClassPathResolver {
+internal class GradleClassPathResolver(private val path: Path, private val includeKotlinDSL: Boolean) :
+    ClassPathResolver {
     override val resolverType: String = "Gradle"
     private val projectDirectory: Path get() = path.parent
 
-    override val classpath: Set<ClassPathEntry> get() {
-        val scripts = listOf("projectClassPathFinder.gradle")
-        val tasks = listOf("kotlinLSPProjectDeps")
-
-        return readDependenciesViaGradleCLI(projectDirectory, scripts, tasks)
-            .apply { if (isNotEmpty()) LOG.info("Successfully resolved dependencies for '${projectDirectory.fileName}' using Gradle") }
-            .map { ClassPathEntry(it, null) }.toSet()
-    }
-    override val buildScriptClasspath: Set<Path> get() {
-        return if (includeKotlinDSL) {
-            val scripts = listOf("kotlinDSLClassPathFinder.gradle")
-            val tasks = listOf("kotlinLSPKotlinDSLDeps")
+    override val classpath: Set<ClassPathEntry>
+        get() {
+            val scripts = listOf("projectClassPathFinder.gradle")
+            val tasks = listOf("kotlinLSPProjectDeps")
 
             return readDependenciesViaGradleCLI(projectDirectory, scripts, tasks)
-                .apply { if (isNotEmpty()) LOG.info("Successfully resolved build script dependencies for '${projectDirectory.fileName}' using Gradle") }
-        } else {
-            emptySet()
+                .apply { if (isNotEmpty()) LOG.info("Successfully resolved dependencies for '${projectDirectory.fileName}' using Gradle") }
+                .map { ClassPathEntry(it, null) }.toSet()
         }
-    }
+    override val buildScriptClasspath: Set<Path>
+        get() {
+            return if (includeKotlinDSL) {
+                val scripts = listOf("kotlinDSLClassPathFinder.gradle")
+                val tasks = listOf("kotlinLSPKotlinDSLDeps")
+
+                return readDependenciesViaGradleCLI(projectDirectory, scripts, tasks)
+                    .apply { if (isNotEmpty()) LOG.info("Successfully resolved build script dependencies for '${projectDirectory.fileName}' using Gradle") }
+            } else {
+                emptySet()
+            }
+        }
 
     override val currentBuildFileVersion: Long get() = path.toFile().lastModified()
 
@@ -53,8 +56,8 @@ private fun gradleScriptToTempFile(scriptName: String, deleteOnExit: Boolean = f
     LOG.debug("Creating temporary gradle file {}", config.absolutePath)
 
     config.bufferedWriter().use { configWriter ->
-        GradleClassPathResolver::class.java.getResourceAsStream("/$scriptName").bufferedReader().use { configReader ->
-            configReader.copyTo(configWriter)
+        GradleClassPathResolver::class.java.getResourceAsStream("/$scriptName")?.bufferedReader().use { configReader ->
+            configReader?.copyTo(configWriter)
         }
     }
 
@@ -73,17 +76,32 @@ private fun getGradleCommand(workspace: Path): Path {
     }
 }
 
-private fun readDependenciesViaGradleCLI(projectDirectory: Path, gradleScripts: List<String>, gradleTasks: List<String>): Set<Path> {
-    LOG.info("Resolving dependencies for '{}' through Gradle's CLI using tasks {}...", projectDirectory.fileName, gradleTasks)
+private fun readDependenciesViaGradleCLI(
+    projectDirectory: Path,
+    gradleScripts: List<String>,
+    gradleTasks: List<String>
+): Set<Path> {
+    LOG.info(
+        "Resolving dependencies for '{}' through Gradle's CLI using tasks {}...",
+        projectDirectory.fileName,
+        gradleTasks
+    )
 
     val tmpScripts = gradleScripts.map { gradleScriptToTempFile(it, deleteOnExit = false).toPath().toAbsolutePath() }
     val gradle = getGradleCommand(projectDirectory)
 
-    val command = listOf(gradle.toString()) + tmpScripts.flatMap { listOf("-I", it.toString()) } + gradleTasks + listOf("--console=plain")
+    val command = listOf(gradle.toString()) + tmpScripts.flatMap {
+        listOf(
+            "-I",
+            it.toString()
+        )
+    } + gradleTasks + listOf("--console=plain")
     val dependencies = findGradleCLIDependencies(command, projectDirectory)
         ?.also { LOG.debug("Classpath for task {}", it) }
         .orEmpty()
-        .filter { it.toString().lowercase().endsWith(".jar") || Files.isDirectory(it) } // Some Gradle plugins seem to cause this to output POMs, therefore filter JARs
+        .filter {
+            it.toString().lowercase().endsWith(".jar") || Files.isDirectory(it)
+        } // Some Gradle plugins seem to cause this to output POMs, therefore filter JARs
         .toSet()
 
     tmpScripts.forEach(Files::delete)
@@ -110,7 +128,6 @@ private val gradleErrorWherePattern by lazy { "\\*\\s+Where:[\r\n]+(\\S\\.*)".to
 private fun parseGradleCLIDependencies(output: String): Set<Path>? {
     LOG.debug(output)
     val artifacts = artifactPattern.findAll(output)
-        .mapNotNull { Paths.get(it.groups[1]?.value) }
-        .filterNotNull()
+        .mapNotNull { it.groups[1]?.value?.let { it1 -> Paths.get(it1) } }
     return artifacts.toSet()
 }

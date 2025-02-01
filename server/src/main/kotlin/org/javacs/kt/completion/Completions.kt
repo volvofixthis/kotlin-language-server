@@ -292,7 +292,7 @@ private fun elementCompletions(file: CompiledFile, cursor: Int, surroundingEleme
             LOG.info("Completing import '{}'", surroundingElement.text)
             val module = file.module
             val match = Regex("import ((\\w+\\.)*)[\\w*]*").matchEntire(surroundingElement.text) ?: return doesntLookLikeImport(surroundingElement)
-            val parentDot = if (match.groupValues[1].isNotBlank()) match.groupValues[1] else "."
+            val parentDot = match.groupValues[1].ifBlank { "." }
             val parent = parentDot.substring(0, parentDot.length - 1)
             LOG.debug("Looking for members of package '{}'", parent)
             val parentPackage = module.getPackage(FqName.fromSegments(parent.split('.')))
@@ -304,7 +304,7 @@ private fun elementCompletions(file: CompiledFile, cursor: Int, surroundingEleme
             val module = file.module
             val match = Regex("package ((\\w+\\.)*)[\\w*]*").matchEntire(surroundingElement.text)
                 ?: return doesntLookLikePackage(surroundingElement)
-            val parentDot = if (match.groupValues[1].isNotBlank()) match.groupValues[1] else "."
+            val parentDot = match.groupValues[1].ifBlank { "." }
             val parent = parentDot.substring(0, parentDot.length - 1)
             LOG.debug("Looking for members of package '{}'", parent)
             val parentPackage = module.getPackage(FqName.fromSegments(parent.split('.')))
@@ -580,8 +580,8 @@ private fun subclassParent(target: DeclarationDescriptor, from: DeclarationDescr
     val targetParent = target.parentsWithSelf.mapNotNull(::isParentClass).firstOrNull() ?: return true
     val fromParents = from.parentsWithSelf.mapNotNull(::isParentClass).toList()
 
-    if (fromParents.isEmpty()) return true
-    else return fromParents.any { DescriptorUtils.isSubclass(it, targetParent) }
+    return if (fromParents.isEmpty()) true
+    else fromParents.any { DescriptorUtils.isSubclass(it, targetParent) }
 }
 
 private fun isParentClass(declaration: DeclarationDescriptor): ClassDescriptor? =
