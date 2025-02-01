@@ -170,6 +170,14 @@ class KotlinLanguageServer(
 
     private fun connectLoggingBackend() {
         val backend: (LogMessage) -> Unit = {
+            if (it.level == LogLevel.ALERT) {
+                client.showMessage(
+                    MessageParams().apply {
+                        type = it.level.toLSPMessageType()
+                        message = it.message
+                    }
+                )
+            }
             client.logMessage(
                 MessageParams().apply {
                     type = it.level.toLSPMessageType()
@@ -183,6 +191,7 @@ class KotlinLanguageServer(
 
     private fun LogLevel.toLSPMessageType(): MessageType =
         when (this) {
+            LogLevel.ALERT -> MessageType.Error
             LogLevel.ERROR -> MessageType.Error
             LogLevel.WARN -> MessageType.Warning
             LogLevel.INFO -> MessageType.Info

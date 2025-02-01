@@ -32,6 +32,7 @@ private class JULRedirector(private val downstream: Logger) : Handler() {
 
 enum class LogLevel(val value: Int) {
     NONE(100),
+    ALERT(5),
     ERROR(2),
     WARN(1),
     INFO(0),
@@ -43,6 +44,7 @@ enum class LogLevel(val value: Int) {
 
 fun String.toLogLevel(): LogLevel {
     return when (this) {
+        "alert" -> LogLevel.ALERT
         "error" -> LogLevel.ERROR
         "warn" -> LogLevel.WARN
         "debug" -> LogLevel.DEBUG
@@ -117,6 +119,8 @@ class Logger {
 
     fun error(msg: String, vararg placeholders: Any?) = logWithPlaceholdersAt(LogLevel.ERROR, msg, placeholders)
 
+    fun alert(msg: String, vararg placeholders: Any?) = logWithPlaceholdersAt(LogLevel.ALERT, msg, placeholders)
+
     fun warn(msg: String, vararg placeholders: Any?) = logWithPlaceholdersAt(LogLevel.WARN, msg, placeholders)
 
     fun info(msg: String, vararg placeholders: Any?) = logWithPlaceholdersAt(LogLevel.INFO, msg, placeholders)
@@ -129,6 +133,8 @@ class Logger {
         logWithPlaceholdersAt(LogLevel.DEEP_TRACE, msg, placeholders)
 
     // Convenience logging methods using inlined lambdas
+
+    inline fun alert(msg: () -> String) = logWithLambdaAt(LogLevel.ALERT, msg)
 
     inline fun error(msg: () -> String) = logWithLambdaAt(LogLevel.ERROR, msg)
 
