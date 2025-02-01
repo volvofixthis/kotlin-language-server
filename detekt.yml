@@ -10,6 +10,8 @@ comments:
 
 complexity:
   excludes: *standardExcludes
+  LongMethod:
+    threshold: 70
 
 empty-blocks:
   excludes: *standardExcludes
@@ -27,6 +29,7 @@ exceptions:
   TooGenericExceptionCaught:
     active: false
 
+
 naming:
   excludes: *standardExcludes
 
@@ -38,6 +41,9 @@ potential-bugs:
 
 style:
   excludes: *standardExcludes
+  ReturnCount:
+    active: true
+    max: 3
   MaxLineLength:
     active: false
   WildcardImport:
