@@ -190,6 +190,47 @@ class SourcePath(
     fun latestCompiledVersion(uri: URI): CompiledFile =
             sourceFile(uri).prepareCompiledFile()
 
+    // Compile changed files
+    private fun compileAndUpdate(changed: List<SourceFile>, kind: CompilationKind): BindingContext? {
+        if (changed.isEmpty()) return null
+
+        // Get clones of the old files, so we can remove the old declarations from the index
+        val oldFiles = changed.mapNotNull {
+            if (it.compiledFile?.text != it.content || it.parsed?.text != it.content) {
+                it.clone()
+            } else {
+                null
+            }
+        }
+
+        // Parse the files that have changed
+        val parse = changed.associateWith { it.apply { parseIfChanged() }.parsed!! }
+
+        // Get all the files. This will parse them if they changed
+        val allFiles = all()
+        beforeCompileCallback.invoke()
+        val (context, module) = cp.compiler.compileKtFiles(parse.values, allFiles, kind)
+
+        // Update cache
+        for ((f, parsed) in parse) {
+            parseDataWriteLock.withLock {
+                if (f.parsed == parsed) {
+                    //only updated if the parsed file didn't change:
+                    f.compiledFile = parsed
+                    f.compiledContext = context
+                    f.module = module
+                }
+            }
+        }
+
+        // Only index normal files, not build files
+        if (kind == CompilationKind.DEFAULT) {
+            refreshWorkspaceIndexes(oldFiles, parse.keys.toList())
+        }
+
+        return context
+    }
+
     /**
      * Compile changed files
      */
@@ -198,47 +239,6 @@ class SourcePath(
         val sources = all.map { files[it]!! }
         val allChanged = sources.filter { it.content != it.compiledFile?.text }
         val (changedBuildScripts, changedSources) = allChanged.partition { it.kind == CompilationKind.BUILD_SCRIPT }
-
-        // Compile changed files
-        fun compileAndUpdate(changed: List<SourceFile>, kind: CompilationKind): BindingContext? {
-            if (changed.isEmpty()) return null
-
-            // Get clones of the old files, so we can remove the old declarations from the index
-            val oldFiles = changed.mapNotNull {
-                if (it.compiledFile?.text != it.content || it.parsed?.text != it.content) {
-                    it.clone()
-                } else {
-                    null
-                }
-            }
-
-            // Parse the files that have changed
-            val parse = changed.associateWith { it.apply { parseIfChanged() }.parsed!! }
-
-            // Get all the files. This will parse them if they changed
-            val allFiles = all()
-            beforeCompileCallback.invoke()
-            val (context, module) = cp.compiler.compileKtFiles(parse.values, allFiles, kind)
-
-            // Update cache
-            for ((f, parsed) in parse) {
-                parseDataWriteLock.withLock {
-                    if (f.parsed == parsed) {
-                        //only updated if the parsed file didn't change:
-                        f.compiledFile = parsed
-                        f.compiledContext = context
-                        f.module = module
-                    }
-                }
-            }
-
-            // Only index normal files, not build files
-            if (kind == CompilationKind.DEFAULT) {
-                refreshWorkspaceIndexes(oldFiles, parse.keys.toList())
-            }
-
-            return context
-        }
 
         val buildScriptsContext = compileAndUpdate(changedBuildScripts, CompilationKind.BUILD_SCRIPT)
         val sourcesContext = compileAndUpdate(changedSources, CompilationKind.DEFAULT)
