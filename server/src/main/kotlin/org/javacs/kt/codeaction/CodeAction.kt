@@ -15,7 +15,7 @@ val QUICK_FIXES = listOf(
 )
 
 fun codeActions(file: CompiledFile, index: SymbolIndex, range: Range, context: CodeActionContext): List<Either<Command, CodeAction>> {
-    // context.only does not work when client is emacs... 
+    // context.only does not work when client is emacs...
     val requestedKinds = context.only ?: listOf(CodeActionKind.Refactor, CodeActionKind.QuickFix)
     return requestedKinds.map {
         when (it) {

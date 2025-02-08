@@ -103,7 +103,7 @@ private class CompilationEnvironment(
             // Not to be confused with the CompilerConfiguration in the language server Configuration
             configuration = KotlinCompilerConfiguration().apply {
                 val langFeatures = mutableMapOf<LanguageFeature, LanguageFeature.State>()
-                for (langFeature in LanguageFeature.values()) {
+                for (langFeature in LanguageFeature.entries) {
                     langFeatures[langFeature] = LanguageFeature.State.ENABLED
                 }
                 val languageVersionSettings = LanguageVersionSettingsImpl(
